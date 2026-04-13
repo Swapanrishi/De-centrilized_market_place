@@ -1,0 +1,46 @@
+START
+ ↓
+User opens website
+ ↓
+Login/Register (PHP + MySQL)
+ ↓
+Connect MetaMask Wallet
+ ↓
+───────────────
+| OPTIONS     |
+───────────────
+ ↓
+1. Sell Item        2. Buy Item
+
+
+
+SELL FLOW:
+ ↓
+Upload Item
+ ↓
+Store in MySQL
+ ↓
+Create NFT (Solidity)
+ ↓
+List Item
+
+
+
+BUY FLOW:
+ ↓
+Select Item
+ ↓
+Click Buy
+ ↓
+MetaMask Payment
+ ↓
+Smart Contract Executes
+ ↓
+Ownership Transfer (Ethereum)
+ ↓
+Update MySQL
+ ↓
+Show Confirmation
+ ↓
+
+END
