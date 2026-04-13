@@ -1,0 +1,57 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+// schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(uuid())
+  walletAddress String    @unique // Crucial: Ties the web2 account to the web3 wallet
+  username      String    @unique
+  bio           String?
+  createdAt     DateTime  @default(now())
+  
+  // Relations
+  products      Product[] 
+  purchases     Order[]   @relation("BuyerOrders")
+}
+
+model Product {
+  id               String   @id @default(uuid())
+  blockchainItemId Int?     @unique // Populated AFTER the smart contract mints the item
+  title            String
+  description      String
+  priceEth         Float    // Display price in Ether
+  imageUrl         String?
+  isSold           Boolean  @default(false)
+  createdAt        DateTime @default(now())
+
+  // Relations
+  sellerId         String
+  seller           User     @relation(fields: [sellerId], references: [id])
+  order            Order?
+}
+
+model Order {
+  id               String   @id @default(uuid())
+  transactionHash  String   @unique // The blockchain Tx hash for receipt tracking
+  status           String   @default("PENDING") // PENDING, COMPLETED, DISPUTED
+  createdAt        DateTime @default(now())
+
+  // Relations
+  productId        String   @unique
+  product          Product  @relation(fields: [productId], references: [id])
+  buyerId          String
+  buyer            User     @relation("BuyerOrders", fields: [buyerId], references: [id])
+}
