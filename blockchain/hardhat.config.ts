@@ -1,3 +1,4 @@
+import "@nomicfoundation/hardhat-toolbox-viem"; // <-- ADD THIS LINE HERE
 import hardhatToolboxViemPlugin from "@nomicfoundation/hardhat-toolbox-viem";
 import { configVariable, defineConfig } from "hardhat/config";
 
