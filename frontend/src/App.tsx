@@ -1,7 +1,7 @@
 import { useState, useEffect} from "react";
 import { BrowserRouter as Router, Routes, Route, Link, useNavigate } from "react-router-dom";
 import axios from "axios";
-
+import {ethers} from "ethers";
 interface Product {
   id: string;
   title: string;
@@ -27,7 +27,7 @@ function AppContent() {
   const [priceEth, setPriceEth] = useState("");
   const [imageUrl, setImageUrl] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-
+  const [buyingId, setBuyingId] = useState<string | null>(null);
   // --- FETCH LOGIC ---
 
 useEffect(() => {
@@ -102,7 +102,54 @@ useEffect(() => {
       setIsSubmitting(false);
     }
   };
+const handleBuyNow = async (product: Product) => {
+    if (!window.ethereum) return alert("Please install MetaMask to make purchases.");
+    if (!userId) return alert("Please wait for your account to sync.");
 
+    setBuyingId(product.id);
+    
+    try {
+      // 1. Connect to MetaMask
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const signer = await provider.getSigner();
+
+      // 2. Build the transaction
+      const tx = await signer.sendTransaction({
+        to: product.seller.walletAddress,
+        value: ethers.parseEther(product.priceEth.toString())
+      });
+
+      console.log("Transaction sent! Hash:", tx.hash);
+
+      // 3. Wait for confirmation
+      const receipt = await tx.wait();
+
+      if (receipt && receipt.status === 1) {
+        // 4. Save to Database
+        await axios.post("http://127.0.0.1:5000/api/orders", {
+          productId: product.id,
+          buyerId: userId,
+          transactionHash: tx.hash
+        });
+
+        alert("Purchase successful! The item is yours.");
+        
+        // INSTANT UI UPDATE: Remove the purchased item from the current view
+        setProducts((prevProducts) => prevProducts.filter((p) => p.id !== product.id));
+      }
+
+    } catch (error: unknown) {
+      console.error("Transaction Failed:", error);
+      const err=error as { code?: string ;message?: string};
+      if (err.code === "ACTION_REJECTED") {
+        alert("Transaction cancelled by user.");
+      } else {
+        alert("Transaction failed. Check console for details.");
+      }
+    } finally {
+      setBuyingId(null);
+    }
+  };
   const formatAddress = (address: string) => `${address.slice(0, 6)}...${address.slice(-4)}`;
 
   return (
@@ -184,16 +231,24 @@ useEffect(() => {
                             <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Price</p>
                             <p className="text-xl font-black text-blue-600">{product.priceEth} ETH</p>
                           </div>
-                          <button 
-                            disabled={!walletAddress} 
-                            className={`px-6 py-3 rounded-2xl font-bold text-sm transition-all ${
-                              walletAddress 
-                              ? 'bg-gray-900 text-white hover:bg-blue-600 hover:shadow-lg hover:shadow-blue-100' 
-                              : 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                            }`}
-                          >
-                            {walletAddress ? 'Buy Now' : 'Connect'}
-                          </button>
+                         <button 
+  // 1. Triggers the blockchain transaction logic
+  onClick={() => handleBuyNow(product)}
+  
+  // 2. Disable if wallet is disconnected OR if we are currently buying this specific item
+  disabled={!walletAddress || buyingId === product.id} 
+  
+  className={`px-6 py-3 rounded-2xl font-bold text-sm transition-all ${
+    buyingId === product.id 
+    ? 'bg-yellow-400 text-yellow-900 cursor-wait animate-pulse' 
+    : walletAddress 
+      ? 'bg-gray-900 text-white hover:bg-blue-600 hover:shadow-lg hover:shadow-blue-100' 
+      : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+  }`}
+>
+  {/* 3. Dynamic text feedback */}
+  {buyingId === product.id ? 'Processing TX...' : walletAddress ? 'Buy Now' : 'Connect'}
+</button>
                         </div>
                       </div>
                     </div>
