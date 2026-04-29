@@ -48,7 +48,7 @@ function AppContent() {
         setWalletAddress(address);
 
         try {
-          const userRes = await axios.post("http://127.0.0.1:5000/api/users", {
+          const userRes = await axios.post(`${import.meta.env.VITE_API_URL}/api/users`, {
             walletAddress: address,
             username: "Trader_" + address.slice(2, 6),
             bio: "BlockMart User",
@@ -74,7 +74,7 @@ function AppContent() {
 
     setIsSubmitting(true);
     try {
-      await axios.post("http://127.0.0.1:5000/api/products", {
+      await axios.post(`${import.meta.env.VITE_API_URL}/api/products`, {
         title, description, priceEth: parseFloat(priceEth), imageUrl, sellerId: userId,
       });
       navigate("/");
@@ -104,7 +104,7 @@ function AppContent() {
       const receipt = await tx.wait();
 
       if (receipt && receipt.status === 1) {
-        await axios.post("http://127.0.0.1:5000/api/orders", {
+        await axios.post(`${import.meta.env.VITE_API_URL}/api/orders`, {
           productId: product.id, buyerId: userId, transactionHash: tx.hash
         });
         setProducts((prev) => prev.filter((p) => p.id !== product.id));
