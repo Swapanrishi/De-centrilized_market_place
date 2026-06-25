@@ -1,0 +1,13 @@
+# blockmart-infra/values.yaml
+
+frontend:
+  image: blockmart-frontend:latest
+  port: 80
+  replicas: 1
+
+backend:
+  image: blockmart-backend:latest
+  port: 5000
+  replicas: 1
+  # In a production environment, this goes in a Secret. For local testing, we template it here.
+  databaseUrl: "postgresql://user:password@your-external-db.com/blockmart?sslmode=require"
